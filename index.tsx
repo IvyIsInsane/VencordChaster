@@ -11,7 +11,7 @@ import ErrorBoundary from "@components/ErrorBoundary";
 import definePlugin, { OptionType } from "@utils/types";
 import { React } from "@webpack/common";
 
-import { loadCacheFromLocalStorage, saveCacheToLocalStorage } from "./native";
+import { loadCacheFromLocalStorage, saveCacheToLocalStorage } from "./datastore";
 
 const Devs = {
     Ivy: {
