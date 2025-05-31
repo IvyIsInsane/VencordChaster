@@ -200,16 +200,6 @@ export default definePlugin({
     authors: [Devs.Ivy],
 
     options: {
-        ...Object.fromEntries(
-            Object.entries(indicatorLocations).map(([key, value]) => {
-                return [key, {
-                    type: OptionType.BOOLEAN,
-                    description: `Show Chaster indicators ${value.description.toLowerCase()}`,
-                    restartNeeded: true,
-                    default: true
-                }];
-            })
-        ),
         apiKey: {
             type: OptionType.STRING,
             description: "Chaster API Key",
@@ -248,19 +238,18 @@ export default definePlugin({
 
         const settings = Settings.plugins.ChasterIntegration;
 
-        Object.entries(indicatorLocations).forEach(([key, value]) => {
-            if (settings[key] !== false) value.onEnable();
-        });
+        addProfileBadge(badge);
+        addMessageDecoration("chaster-indicator", e =>
+            <ErrorBoundary noop >
+                <ChasterIndicator userId={e.message.author.id} />
+            </ErrorBoundary>
+        );
         console.warn("ChasterIntegration: Not in browser environment, skipping start");
     },
 
     stop() {
         saveCacheToLocalStorage(chasterCache);
         console.log("ChasterIntegration stopped");
-
-        Object.entries(indicatorLocations).forEach(([_, value]) => {
-            value.onDisable();
-        });
     },
 
     MessageUsername: function ({ original, message, author }) {
