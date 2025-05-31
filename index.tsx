@@ -23,12 +23,6 @@ let chasterCache: Record<string, { data: any, lockData: any, timestamp: number; 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 function checkLockStatus(userId: string): boolean {
-    // Check if we're in a browser environment before using fetch API
-    if (typeof window === "undefined" || typeof fetch === "undefined") {
-        console.warn("ChasterIntegration: Not in browser environment, cannot check lock status");
-        return false;
-    }
-
     const updateChasterStatus = async () => {
         try {
             console.log("ChasterIntegration: Fetching data for userId:", userId);
@@ -39,25 +33,25 @@ function checkLockStatus(userId: string): boolean {
                 requestInit.headers = {
                     Authorization: `Bearer ${apiKey}`,
                 };
-            }
-            const response = await fetch(`https://api.chaster.app/users/search/by-discord-id/${userId}`, requestInit);
+                const response = await fetch(`https://api.chaster.app/users/search/by-discord-id/${userId}`, requestInit);
 
-            if (response.status === 404) {
-                chasterCache[userId] = { data: null, lockData: null, timestamp: Date.now() };
-                return;
-            }
-
-            if (response.ok) {
-                const data = await response.json();
-                const chasterID = data?._id;
-                if (!chasterID) {
-                    console.warn("Chaster ID not found");
+                if (response.status === 404) {
+                    chasterCache[userId] = { data: null, lockData: null, timestamp: Date.now() };
                     return;
                 }
-                const resp = await fetch(`https://api.chaster.app/locks/user/${chasterID}`, requestInit);
-                if (resp.ok) {
-                    const lockData = await resp.json();
-                    chasterCache[userId] = { data, lockData, timestamp: Date.now() };
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const chasterID = data?._id;
+                    if (!chasterID) {
+                        console.warn("Chaster ID not found");
+                        return;
+                    }
+                    const resp = await fetch(`https://api.chaster.app/locks/user/${chasterID}`, requestInit);
+                    if (resp.ok) {
+                        const lockData = await resp.json();
+                        chasterCache[userId] = { data, lockData, timestamp: Date.now() };
+                    }
                 }
             }
         } catch (error) {
