@@ -23,6 +23,12 @@ let chasterCache: Record<string, { data: any, lockData: any, timestamp: number; 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 function checkLockStatus(userId: string): boolean {
+    // Check if we're in a browser environment before using fetch API
+    if (typeof window === "undefined" || typeof fetch === "undefined") {
+        console.warn("ChasterIntegration: Not in browser environment, cannot check lock status");
+        return false;
+    }
+
     const updateChasterStatus = async () => {
         try {
             const apiKey = Settings.plugins.ChasterIntegration.apiKey || "";
@@ -58,7 +64,6 @@ function checkLockStatus(userId: string): boolean {
     if (!userData || now - userData.timestamp >= CACHE_TTL) {
         updateChasterStatus().catch(console.error);
     }
-
 
     return !!userData?.lockData?.length;
 }
@@ -121,6 +126,7 @@ function formatTimeLeft(lock: any): any {
     }
 }
 function ChasterIndicator(props: { userId: string; }) {
+
     const shouldShowChasterBadge = checkLockStatus(props.userId);
     const locktime = formatTimeLeft(chasterCache[props.userId]?.lockData?.[0]);
     let canBeUnlocked = chasterCache[props.userId]?.lockData?.[0]?.canBeUnlocked;
@@ -129,6 +135,7 @@ function ChasterIndicator(props: { userId: string; }) {
     if (locktime === "0s") {
         canBeUnlocked = true;
     }
+
     if (shouldShowChasterBadge) {
         return (
             <span
@@ -142,8 +149,7 @@ function ChasterIndicator(props: { userId: string; }) {
                     fontWeight: "600",
                     display: "inline-flex",
                     alignItems: "center"
-                }
-                }
+                }}
             >
                 {canBeUnlocked ? "🔓" : "🔒"}
                 Locked
@@ -157,6 +163,7 @@ function ChasterIndicator(props: { userId: string; }) {
             </span>
         );
     }
+    return null;
 }
 
 const badge: ProfileBadge = {
@@ -182,7 +189,7 @@ const indicatorLocations = {
 };
 
 export default definePlugin({
-    name: "ChasterIntegration",
+    name: "Vencord Chaster",
     description: "Integrates Chaster with Discord to manage chastity devices and related features.",
     authors: [Devs.Ivy],
 
@@ -215,9 +222,9 @@ export default definePlugin({
         }
     ],
 
-    patchUsername(props) {
+    patchUsername(props: { username: { type: (messageProps: any) => any; }; }) {
         const oldRender = props.username.type;
-        props.username.type = messageProps => {
+        props.username.type = (messageProps: any) => {
             const res = oldRender(messageProps);
             return this.MessageUsername({
                 original: res,
@@ -238,6 +245,7 @@ export default definePlugin({
         Object.entries(indicatorLocations).forEach(([key, value]) => {
             if (settings[key] !== false) value.onEnable();
         });
+        console.warn("ChasterIntegration: Not in browser environment, skipping start");
     },
 
     stop() {
@@ -250,15 +258,20 @@ export default definePlugin({
     },
 
     MessageUsername: function ({ original, message, author }) {
+
         const shouldShowChasterTag = checkLockStatus(author.id);
 
         if (!shouldShowChasterTag) return original;
 
-        return React.createElement(React.Fragment, {}, [
-            original,
-            shouldShowChasterTag && React.createElement(ErrorBoundary, { noop: true },
-                React.createElement(ChasterIndicator, { userId: author.id })
-            )
-        ]);
+        return (
+            <>
+                {original}
+                {shouldShowChasterTag && (
+                    <ErrorBoundary noop>
+                        <ChasterIndicator userId={author.id} />
+                    </ErrorBoundary >
+                )}
+            </>
+        );
     }
 });
