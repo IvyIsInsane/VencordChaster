@@ -31,6 +31,7 @@ function checkLockStatus(userId: string): boolean {
 
     const updateChasterStatus = async () => {
         try {
+            console.log("ChasterIntegration: Fetching data for userId:", userId);
             const apiKey = Settings.plugins.ChasterIntegration.apiKey || "";
             const requestInit: RequestInit = {};
 
@@ -39,8 +40,13 @@ function checkLockStatus(userId: string): boolean {
                     Authorization: `Bearer ${apiKey}`,
                 };
             }
-
             const response = await fetch(`https://api.chaster.app/users/search/by-discord-id/${userId}`, requestInit);
+
+            if (response.status === 404) {
+                chasterCache[userId] = { data: null, lockData: null, timestamp: Date.now() };
+                return;
+            }
+
             if (response.ok) {
                 const data = await response.json();
                 const chasterID = data?._id;
