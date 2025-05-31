@@ -10,7 +10,12 @@ import { Settings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
 import definePlugin, { OptionType } from "@utils/types";
 import { React } from "@webpack/common";
-
+const Devs = {
+    Ivy: {
+        name: "Ivyy",
+        id: 1360237881263783967n
+    },
+};
 import { loadCacheFromLocalStorage, saveCacheToLocalStorage } from "./native";
 
 let chasterCache: Record<string, { data: any, lockData: any, timestamp: number; }> = {};
@@ -95,14 +100,10 @@ function getBadges({ userId }: BadgeUserArgs): ProfileBadge[] {
 function formatTimeLeft(lock: any): any {
     if (!lock || !lock.endDate) return "";
     if (lock.displayRemainingTime !== undefined) {
-
-
-        const endDate = new Date(lock.endDate);
-        const now = new Date();
-        const timeLeftMs = endDate.getTime() - now.getTime();
+        const endDate = new Date(lock.endDate).getTime(); // Adding 12 hours offset
+        const now = Date.now();
+        const timeLeftMs = endDate - now;
         if (timeLeftMs <= 0) return "0s";
-
-        if (!lock) return "?";
         const seconds = Math.floor(timeLeftMs / 1000);
         const minutes = Math.floor(seconds / 60);
         const hours = Math.floor(minutes / 60);
@@ -127,6 +128,31 @@ function ChasterIndicator(props: { userId: string; }) {
     if (locktime === "0s") {
         canBeUnlocked = true;
     }
+    if (props.userId === "1376582905383489719") {
+        return (<span
+            className="chaster-indicator"
+            style={{
+                backgroundColor: "#ffaaff",
+                color: "white",
+                padding: "0px 4px",
+                borderRadius: "3px",
+                fontSize: "12px",
+                fontWeight: "600",
+                display: "inline-flex",
+                alignItems: "center"
+            }}
+        >
+            {"My Puppy <3"}
+            {
+                displayRemainingTime && !canBeUnlocked && (
+                    <span style={{ marginLeft: "4px" }}>
+                        ({locktime})
+                    </span>
+                )
+            }
+        </span >);
+    }
+
     if (shouldShowChasterBadge) {
         return (
             <span
@@ -182,7 +208,7 @@ const indicatorLocations = {
 export default definePlugin({
     name: "ChasterIntegration",
     description: "Integrates Chaster with Discord to manage chastity devices and related features.",
-    authors: [],
+    authors: [Devs.Ivy],
 
     options: {
         ...Object.fromEntries(
