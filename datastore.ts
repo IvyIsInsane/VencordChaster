@@ -4,13 +4,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import { DataStore } from "@api/index";
+import { PluginNative } from "@utils/types";
+const Native = VencordNative.pluginHelpers.vencordChaster as PluginNative<typeof import("./native")>;
 
-const CHASTER_CACHE_KEY = "chasterCache";
 
 export async function saveCacheToLocalStorage(cache: Record<string, any>) {
     try {
-        await DataStore.set(CHASTER_CACHE_KEY, cache);
+        await Native.saveData(cache);
     } catch (error) {
         console.error("Failed to save Chaster cache to DataStore:", error);
     }
@@ -18,7 +18,8 @@ export async function saveCacheToLocalStorage(cache: Record<string, any>) {
 
 export async function loadCacheFromLocalStorage(): Promise<Record<string, any> | null> {
     try {
-        return await DataStore.get(CHASTER_CACHE_KEY) || null;
+        const data = await Native.loadData();
+        return data && typeof data === "string" ? JSON.parse(data) : null;
     } catch (error) {
         console.error("Failed to load Chaster cache from DataStore:", error);
         return {};
