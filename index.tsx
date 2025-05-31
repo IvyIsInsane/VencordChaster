@@ -10,14 +10,15 @@ import { Settings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
 import definePlugin, { OptionType } from "@utils/types";
 import { React } from "@webpack/common";
+
+import { loadCacheFromLocalStorage, saveCacheToLocalStorage } from "./native";
+
 const Devs = {
     Ivy: {
         name: "Ivyy",
         id: 1360237881263783967n
     },
 };
-import { loadCacheFromLocalStorage, saveCacheToLocalStorage } from "./native";
-
 let chasterCache: Record<string, { data: any, lockData: any, timestamp: number; }> = {};
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
@@ -128,31 +129,6 @@ function ChasterIndicator(props: { userId: string; }) {
     if (locktime === "0s") {
         canBeUnlocked = true;
     }
-    if (props.userId === "1376582905383489719") {
-        return (<span
-            className="chaster-indicator"
-            style={{
-                backgroundColor: "#ffaaff",
-                color: "white",
-                padding: "0px 4px",
-                borderRadius: "3px",
-                fontSize: "12px",
-                fontWeight: "600",
-                display: "inline-flex",
-                alignItems: "center"
-            }}
-        >
-            {"My Puppy <3"}
-            {
-                displayRemainingTime && !canBeUnlocked && (
-                    <span style={{ marginLeft: "4px" }}>
-                        ({locktime})
-                    </span>
-                )
-            }
-        </span >);
-    }
-
     if (shouldShowChasterBadge) {
         return (
             <span
