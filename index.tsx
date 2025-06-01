@@ -112,6 +112,7 @@ function ChasterIndicator(props: { userId: string; }) {
     let canBeUnlocked = chasterCache[props.userId]?.lockData?.[0]?.canBeUnlocked;
     const displayRemainingTime = chasterCache[props.userId]?.lockData?.[0]?.displayRemainingTime;
     const kh = chasterCache[props.userId]?.lockData?.[0]?.keyholder?.username;
+    const isFrozen = chasterCache[props.userId]?.lockData?.[0]?.isFrozen;
     if (locktime === "0s") {
         canBeUnlocked = true;
     }
@@ -132,6 +133,7 @@ function ChasterIndicator(props: { userId: string; }) {
                 }}
             >
                 {canBeUnlocked ? "🔓" : "🔒"}
+                {isFrozen ? "❄️" : ""}
                 Locked
                 {
                     !canBeUnlocked && kh && (

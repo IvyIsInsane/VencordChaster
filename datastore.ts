@@ -21,6 +21,7 @@ export interface ChasterUserData {
         endDate?: string;
         displayRemainingTime?: boolean;
         canBeUnlocked?: boolean;
+        isFrozen?: boolean;
         keyholder?: {
             username: string;
         };
@@ -46,6 +47,7 @@ function extractEssentialData(cache: Record<string, any>): ChasterCache {
                 _id: lock._id,
                 status: lock.status,
                 endDate: lock.endDate,
+                isFrozen: lock.isFrozen,
                 displayRemainingTime: lock.displayRemainingTime,
                 canBeUnlocked: lock.canBeUnlocked,
                 keyholder: lock.keyholder ? {
