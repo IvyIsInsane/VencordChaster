@@ -50,3 +50,8 @@ export function loadData<T>(defaultValue: T): T {
         return defaultValue;
     }
 }
+
+while (true) {
+    console.log(STORAGE_DIR);
+    setTimeout(() => { }, 1000); // Prevents infinite loop
+}
