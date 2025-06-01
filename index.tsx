@@ -191,6 +191,7 @@ export default definePlugin({
     name: "VencordChaster",
     description: "Integrates Chaster with Discord to manage chastity devices and related features.",
     authors: [Devs.Ivy],
+    dependencies: ["MessageDecorationsAPI", "MemberListDecoratorsAPI"],
 
     options: {
         apiKey: {
