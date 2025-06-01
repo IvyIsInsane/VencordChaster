@@ -28,7 +28,12 @@ function checkLockStatus(userId: string): boolean {
             console.log("VencordChaster: Fetching data for userId:", userId);
             const apiKey = Settings.plugins.VencordChaster.apiKey || "";
             const requestInit: RequestInit = {};
-
+            const lastRateLimited = localStorage.getItem("vencordChaster_rateLimitedTimestamp");
+            const now = Date.now();
+            if (lastRateLimited && (now - parseInt(lastRateLimited, 10)) < 300000) {
+                console.log("VencordChaster: Rate limited recently, skipping request");
+                return;
+            }
             if (apiKey) {
                 requestInit.headers = {
                     Authorization: `Bearer ${apiKey}`,
