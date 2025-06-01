@@ -25,8 +25,8 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 function checkLockStatus(userId: string): boolean {
     const updateChasterStatus = async () => {
         try {
-            console.log("ChasterIntegration: Fetching data for userId:", userId);
-            const apiKey = Settings.plugins.ChasterIntegration.apiKey || "";
+            console.log("VencordChaster: Fetching data for userId:", userId);
+            const apiKey = Settings.plugins.VencordChaster.apiKey || "";
             const requestInit: RequestInit = {};
 
             if (apiKey) {
@@ -53,6 +53,7 @@ function checkLockStatus(userId: string): boolean {
                         chasterCache[userId] = { data, lockData, timestamp: Date.now() };
                     }
                 }
+                saveCacheToLocalStorage(chasterCache);
             }
         } catch (error) {
             console.error("Error fetching Chaster data:", error);
@@ -69,7 +70,7 @@ function checkLockStatus(userId: string): boolean {
 }
 
 function getBadges({ userId }: BadgeUserArgs): ProfileBadge[] {
-    console.debug("ChasterIntegration: getBadges called for userId:", userId);
+    console.debug("VencordChaster: getBadges called for userId:", userId);
     const shouldShowChasterBadge = checkLockStatus(userId);
     if (!shouldShowChasterBadge) return [];
 
@@ -168,7 +169,7 @@ const indicatorLocations = {
 };
 
 export default definePlugin({
-    name: "Vencord Chaster",
+    name: "VencordChaster",
     description: "Integrates Chaster with Discord to manage chastity devices and related features.",
     authors: [Devs.Ivy],
 
@@ -206,10 +207,11 @@ export default definePlugin({
 
     async start() {
         const loadedCache = await loadCacheFromLocalStorage();
+        console.log("VencordChaster: Loaded cache:", loadedCache);
         chasterCache = loadedCache || {};
-        console.log("ChasterIntegration started");
+        console.log("VencordChaster started");
 
-        const settings = Settings.plugins.ChasterIntegration;
+        const settings = Settings.plugins.VencordChaster;
 
         addProfileBadge(badge);
         addMessageDecoration("chaster-indicator", e =>
@@ -217,12 +219,12 @@ export default definePlugin({
                 <ChasterIndicator userId={e.message.author.id} />
             </ErrorBoundary>
         );
-        console.warn("ChasterIntegration: Not in browser environment, skipping start");
+        console.warn("VencordChaster: Not in browser environment, skipping start");
     },
 
     stop() {
         saveCacheToLocalStorage(chasterCache);
-        console.log("ChasterIntegration stopped");
+        console.log("VencordChaster stopped");
     },
 
     MessageUsername: function ({ original, message, author }) {

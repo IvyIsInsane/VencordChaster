@@ -5,7 +5,7 @@
  */
 
 import { PluginNative } from "@utils/types";
-const Native = VencordNative.pluginHelpers.vencordChaster as PluginNative<typeof import("./native")>;
+const Native = VencordNative.pluginHelpers.VencordChaster as PluginNative<typeof import("./native")>;
 
 
 export async function saveCacheToLocalStorage(cache: Record<string, any>) {
