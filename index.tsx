@@ -5,6 +5,7 @@
  */
 
 import { addProfileBadge, BadgePosition, BadgeUserArgs, ProfileBadge, removeProfileBadge } from "@api/Badges";
+import { addMemberListDecorator, removeMemberListDecorator } from "@api/MemberListDecorators";
 import { addMessageDecoration, removeMessageDecoration } from "@api/MessageDecorations";
 import { Settings } from "@api/Settings";
 import ErrorBoundary from "@components/ErrorBoundary";
@@ -28,12 +29,6 @@ function checkLockStatus(userId: string): boolean {
             console.log("VencordChaster: Fetching data for userId:", userId);
             const apiKey = Settings.plugins.VencordChaster.apiKey || "";
             const requestInit: RequestInit = {};
-            const lastRateLimited = localStorage.getItem("vencordChaster_rateLimitedTimestamp");
-            const now = Date.now();
-            if (lastRateLimited && (now - parseInt(lastRateLimited, 10)) < 300000) {
-                console.log("VencordChaster: Rate limited recently, skipping request");
-                return;
-            }
             if (apiKey) {
                 requestInit.headers = {
                     Authorization: `Bearer ${apiKey}`,
@@ -139,12 +134,20 @@ function ChasterIndicator(props: { userId: string; }) {
                 {canBeUnlocked ? "🔓" : "🔒"}
                 Locked
                 {
-                    displayRemainingTime && !canBeUnlocked && (
+                    !canBeUnlocked && kh && (
                         <span style={{ marginLeft: "4px" }}>
-                            {kh ? `by ${kh}` : ""} ({locktime})
+                            {kh ? `by ${kh}` : ""}
                         </span>
                     )
                 }
+                {
+                    displayRemainingTime && !canBeUnlocked && (
+                        <span style={{ marginLeft: "4px" }}>
+                            ({locktime})
+                        </span>
+                    )
+                }
+
             </span>
         );
     }
@@ -157,6 +160,15 @@ const badge: ProfileBadge = {
 };
 
 const indicatorLocations = {
+    list: {
+        description: "In the member list",
+        onEnable: () => addMemberListDecorator("platform-indicator", props =>
+            <ErrorBoundary noop>
+                <ChasterIndicator userId={props.user.id} />
+            </ErrorBoundary >
+        ),
+        onDisable: () => removeMemberListDecorator("platform-indicator")
+    },
     badges: {
         description: "In user profiles, as badges",
         onEnable: () => addProfileBadge(badge),
@@ -218,17 +230,22 @@ export default definePlugin({
 
         const settings = Settings.plugins.VencordChaster;
 
-        addProfileBadge(badge);
-        addMessageDecoration("chaster-indicator", e =>
-            <ErrorBoundary noop >
-                <ChasterIndicator userId={e.message.author.id} />
-            </ErrorBoundary>
-        );
-        console.warn("VencordChaster: Not in browser environment, skipping start");
-    },
+        for (const [key, location] of Object.entries(indicatorLocations)) {
+            if (settings[key] !== false) {
+                location.onEnable();
+            }
+        }
 
+        if (!window?.document) {
+            console.warn("VencordChaster: Not in browser environment, skipping start");
+        }
+    },
     stop() {
         saveCacheToLocalStorage(chasterCache);
+        for (const location of Object.values(indicatorLocations)) {
+            location.onDisable();
+        }
+
         console.log("VencordChaster stopped");
     },
 

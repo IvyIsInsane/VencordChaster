@@ -5,9 +5,10 @@
  */
 
 import { PluginNative } from "@utils/types";
-const Native = VencordNative.pluginHelpers.VencordChaster as PluginNative<typeof import("./native")>;
-
-// Define the essential data structure that needs to be saved
+const Native = VencordNative?.pluginHelpers?.VencordChaster as PluginNative<typeof import("./native")>;
+const isInBrowser = typeof window !== "undefined" && !VencordNative;
+const STORAGE_KEY = "VencordChasterCache";
+const { localStorage } = window;
 export interface ChasterUserData {
     timestamp: number;
     data: {
@@ -28,9 +29,6 @@ export interface ChasterUserData {
 
 export type ChasterCache = Record<string, ChasterUserData>;
 
-/**
- * Extracts only the essential data needed for the plugin functionality
- */
 function extractEssentialData(cache: Record<string, any>): ChasterCache {
     const essentialCache: ChasterCache = {};
 
@@ -62,19 +60,28 @@ function extractEssentialData(cache: Record<string, any>): ChasterCache {
 
 export async function saveCacheToLocalStorage(cache: Record<string, any>) {
     try {
-        // Only save essential data to reduce storage size
         const essentialData = extractEssentialData(cache);
-        await Native.saveData(essentialData);
+
+        if (isInBrowser) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(essentialData));
+        } else {
+            await Native.saveData(essentialData);
+        }
     } catch (error) {
-        console.error("Failed to save Chaster cache to DataStore:", error);
+        console.error("Failed to save Chaster cache to storage:", error);
     }
 }
 
 export async function loadCacheFromLocalStorage(): Promise<Record<string, any> | null> {
     try {
-        const data = await Native.loadData();
+        let data;
 
-        // Handle both string data and object data formats
+        if (isInBrowser) {
+            data = localStorage.getItem(STORAGE_KEY);
+        } else {
+            data = await Native.loadData();
+        }
+
         if (typeof data === "string") {
             try {
                 return JSON.parse(data);
@@ -86,7 +93,7 @@ export async function loadCacheFromLocalStorage(): Promise<Record<string, any> |
 
         return data || {};
     } catch (error) {
-        console.error("Failed to load Chaster cache from DataStore:", error);
+        console.error("Failed to load Chaster cache from storage:", error);
         return {};
     }
 }
