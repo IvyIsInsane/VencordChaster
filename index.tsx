@@ -76,28 +76,7 @@ function getBadges({ userId }: BadgeUserArgs): ProfileBadge[] {
     return [{
         component: () => (
             <span className="chaster-badge" >
-                <span
-                    className="chaster-indicator"
-                    style={{
-                        backgroundColor: "#7289da",
-                        color: "white",
-                        padding: "0px 4px",
-                        borderRadius: "3px",
-                        fontSize: "12px",
-                        fontWeight: "600",
-                        display: "inline-flex",
-                        alignItems: "center"
-                    }}
-                >
-                    🔒 Locked
-                    {
-                        chasterCache[userId]?.lockData?.[0]?.displayRemainingTime && (
-                            <span style={{ marginLeft: "4px" }}>
-                                ({formatTimeLeft(chasterCache[userId]?.lockData?.[0])})
-                            </span>
-                        )
-                    }
-                </span>
+                <ChasterIndicator userId={userId} />
             </span>
         ),
         key: "chaster-badge"
