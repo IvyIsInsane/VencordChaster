@@ -16,13 +16,43 @@ import { loadCacheFromLocalStorage, saveCacheToLocalStorage } from "./datastore"
 
 const Devs = {
     Ivy: {
-        name: "Ivyy",
+        name: "IvyIsInsane",
         id: 1360237881263783967n
     },
 };
+
 let chasterCache: Record<string, { data: any, lockData: any, timestamp: number; }> = {};
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const badge: ProfileBadge = {
+    getBadges,
+    position: BadgePosition.START,
+};
 
+const indicatorLocations = {
+    list: {
+        description: "In the member list",
+        onEnable: () => addMemberListDecorator("platform-indicator", props =>
+            <ErrorBoundary noop>
+                <ChasterIndicator userId={props.user.id} />
+            </ErrorBoundary >
+        ),
+        onDisable: () => removeMemberListDecorator("platform-indicator")
+    },
+    badges: {
+        description: "In user profiles, as badges",
+        onEnable: () => addProfileBadge(badge),
+        onDisable: () => removeProfileBadge(badge)
+    },
+    messages: {
+        description: "Inside messages",
+        onEnable: () => addMessageDecoration("chaster-indicator", e =>
+            <ErrorBoundary noop >
+                <ChasterIndicator userId={e.message.author.id} />
+            </ErrorBoundary>
+        ),
+        onDisable: () => removeMessageDecoration("chaster-indicator")
+    }
+};
 function checkLockStatus(userId: string): boolean {
     const updateChasterStatus = async () => {
         try {
@@ -83,6 +113,7 @@ function getBadges({ userId }: BadgeUserArgs): ProfileBadge[] {
         key: "chaster-badge"
     }];
 }
+
 function formatTimeLeft(lock: any): any {
     if (!lock || !lock.endDate) return "";
     if (lock.displayRemainingTime !== undefined) {
@@ -105,6 +136,7 @@ function formatTimeLeft(lock: any): any {
         }
     }
 }
+
 function ChasterIndicator(props: { userId: string; }) {
 
     const shouldShowChasterBadge = checkLockStatus(props.userId);
@@ -156,37 +188,6 @@ function ChasterIndicator(props: { userId: string; }) {
     return null;
 }
 
-const badge: ProfileBadge = {
-    getBadges,
-    position: BadgePosition.START,
-};
-
-const indicatorLocations = {
-    list: {
-        description: "In the member list",
-        onEnable: () => addMemberListDecorator("platform-indicator", props =>
-            <ErrorBoundary noop>
-                <ChasterIndicator userId={props.user.id} />
-            </ErrorBoundary >
-        ),
-        onDisable: () => removeMemberListDecorator("platform-indicator")
-    },
-    badges: {
-        description: "In user profiles, as badges",
-        onEnable: () => addProfileBadge(badge),
-        onDisable: () => removeProfileBadge(badge)
-    },
-    messages: {
-        description: "Inside messages",
-        onEnable: () => addMessageDecoration("chaster-indicator", e =>
-            <ErrorBoundary noop >
-                <ChasterIndicator userId={e.message.author.id} />
-            </ErrorBoundary>
-        ),
-        onDisable: () => removeMessageDecoration("chaster-indicator")
-    }
-};
-
 export default definePlugin({
     name: "VencordChaster",
     description: "Integrates Chaster with Discord to manage chastity devices and related features.",
@@ -227,35 +228,28 @@ export default definePlugin({
 
     async start() {
         const loadedCache = await loadCacheFromLocalStorage();
-        console.log("VencordChaster: Loaded cache:", loadedCache);
         chasterCache = loadedCache || {};
-        console.log("VencordChaster started");
-
         const settings = Settings.plugins.VencordChaster;
-
         for (const [key, location] of Object.entries(indicatorLocations)) {
             if (settings[key] !== false) {
                 location.onEnable();
             }
         }
-
         if (!window?.document) {
             console.warn("VencordChaster: Not in browser environment, skipping start");
         }
     },
+
     stop() {
         saveCacheToLocalStorage(chasterCache);
         for (const location of Object.values(indicatorLocations)) {
             location.onDisable();
         }
-
         console.log("VencordChaster stopped");
     },
 
     MessageUsername: function ({ original, message, author }) {
-
         const shouldShowChasterTag = checkLockStatus(author.id);
-
         if (!shouldShowChasterTag) return original;
 
         return (
