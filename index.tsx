@@ -58,11 +58,14 @@ function checkLockStatus(userId: string): boolean {
         try {
             console.log("VencordChaster: Fetching data for userId:", userId);
             const apiKey = Settings.plugins.VencordChaster.apiKey || "";
-            const requestInit: RequestInit = {};
+            const requestInit: RequestInit = {
+                headers: {
+                    "Content-Type": "application/json",
+                    "User-Agent": "VencordChaster/1.0",
+                    ...(apiKey && { Authorization: `Bearer ${apiKey}` }),
+                },
+            };
             if (apiKey) {
-                requestInit.headers = {
-                    Authorization: `Bearer ${apiKey}`,
-                };
                 const response = await fetch(`https://api.chaster.app/users/search/by-discord-id/${userId}`, requestInit);
 
                 if (response.status === 404) {
